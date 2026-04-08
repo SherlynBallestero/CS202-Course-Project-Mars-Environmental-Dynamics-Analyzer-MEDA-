@@ -127,6 +127,8 @@ void inputParameter(float *parameter,float min, float max,char paramName []){
             else
             {
                 printf("Error: %s out of reasonable range: [%.1f, %.1f].\n",paramName, min, max);
+                // Clear the input buffer
+                while (getchar() != '\n');
           
             }  
 
@@ -134,6 +136,8 @@ void inputParameter(float *parameter,float min, float max,char paramName []){
         else
         {  
             printf("Error - invalid data type received. Values must be a number or decimal in reasonables range. Please try again.\n");
+            // Clear the input buffer
+            while (getchar() != '\n');
         }
     } 
 }
