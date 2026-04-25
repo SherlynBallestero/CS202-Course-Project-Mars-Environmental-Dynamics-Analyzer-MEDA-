@@ -16,14 +16,13 @@
 
 
 // Constants for thresholds and sensor readings
-const float VALUE_MAX = 50.0;   // Maximum safe <sensor data> value
-
 // Constants for thresholds
 const float TEMP_MAX = 50.0;   // Indicates if the temperature(internal) is outside the safe range  
 const float TEMP_MIN = -20.0;   // Indicates if the temperature (internal) is outside the safe range  
-const float DUST_MAX = 75.0;   // Maximum safe dust level percent
 const float WindS_MAX = 30.0;   // Maximum safe wind speed level aprox,Design to withstand up to about 30 m/s
 const float Radiation_MAX = 1.0;   // Maximum safe radiation level
+const float DUST_SEVERITY_MAX = 98.0;// Maximum safe dust severity index
+
 
 // Use either a macro or a constant to define the array size
 #define NUM_READINGS 2
@@ -32,7 +31,7 @@ int validationIndex=0;
 int i;
 //prototype
 void inputParameter(float *parameter,float min, float max,char paramName []);
-int average_mensurements(float mensurements[], int number_mensurements);
+float average_mensurements(float mensurements[], int number_mensurements);
 void displayCollectedData(void);
 void sumarizeWarnings(void);
 
@@ -116,19 +115,18 @@ int main() {
             //this way to print make the text be print in red(31m), green(32m), yellow(33m)
             printf("\x1b[33m WARNING: strong wind detected (%.1f m/s), risk of structural damage \x1b[0m\n",windspeed[i]);
         }
-        if(dust_level[i]>DUST_MAX){
-            shutdownRequired=true;
-            dustWarning=true;
-            //this way to print make the text be print in red(31m), green(32m), yellow(33m)
-            printf("\x1b[33m WARNING: Dust Lavel Percent too high (%.1f %%)! \x1b[0m\n",dust_level[i]);
-            
-        }
         if(radiation_level[i]>Radiation_MAX){
             shutdownRequired=true;
             radWarning=true;
             //this way to print make the text be print in red(31m), green(32m), yellow(33m)
             printf("\x1b[33m WARNING: High radiation detected, (%.3f mSv/h) - Possible solar event! \x1b[0m\n",radiation_level[i]);
-  
+            
+        }
+        if(dust_severity[i] > DUST_SEVERITY_MAX){
+            shutdownRequired = true;
+            dustWarning = true;
+            printf("\x1b[33m WARNING: Dust Severity Index too high (%.2f) - High risk of system damage! \x1b[0m\n", 
+                dust_severity[i]);
         }
         
     }
@@ -146,7 +144,12 @@ int main() {
 }
 
 void inputParameter(float *parameter,float min, float max,char paramName []){
-      while(true)
+    /* Helper function that validates user input for a sensor and 
+     keeps prompting until a numeric  value within the allowed range is entered.  
+    */
+    
+    
+    while(true)
       {
         //ask the user for data
         printf("Please enter the %s value:",paramName);
@@ -178,13 +181,15 @@ void inputParameter(float *parameter,float min, float max,char paramName []){
     } 
 }
 
-int average_mensurements(float mensurements[], int number_mensurements){
+float average_mensurements(float mensurements[], int number_mensurements){
+    /* Function that calculates and returns the average of an array of readings.*/ 
+    
     //handeling not items, avoiding division by 0
     if (number_mensurements==0){
         return 0;
     }
     //average from a array
-    int sum=0;
+    float sum=0;
     for(i=0; i< number_mensurements; ++i){
         sum+=mensurements[i];
     }
@@ -194,8 +199,10 @@ int average_mensurements(float mensurements[], int number_mensurements){
 }
 
 
-void displayCollectedData(void)
-{
+void displayCollectedData(void){
+    /*Function that prints all collected sensor readings,
+     calculated values, and the Dust Severity Index.*/
+
     printf("\nEntered Collection of Sensor Data\n");
     printf("------------------------------------------------------\n");
     printf("\x1b[34m Temperature Readings:\x1b[0m\n");
@@ -236,8 +243,9 @@ void displayCollectedData(void)
 
 } 
 
-void sumarizeWarnings(void)
-{
+void sumarizeWarnings(void){
+    /*Function that summarizes the detected warnings and shows whether
+     the system remains operational or requires shutdown.*/
    
     printf("\x1b[33m System Warnings Summary:\x1b[0m\n");
     printf("---------------------------\n");
@@ -248,11 +256,11 @@ void sumarizeWarnings(void)
     {
         if (tempWarning) 
         {
-            printf("WARNING: Temperature too high! Rover shutdown required to prevent damage.\n");
+            printf("WARNING: Temperature out of safe range! Rover shutdown required to prevent damage.\n");
         }
         if (dustWarning) 
         {
-            printf("DWARNING: Dust Severity Index exceeds safe limits. Close all external ports to prevent damage.\n");
+            printf("WARNING: Dust Severity Index exceeds safe limits. Close all external ports to prevent damage.\n");
         }
         if (windspeedWarning) 
         {
@@ -260,7 +268,7 @@ void sumarizeWarnings(void)
         }
         if (radWarning) 
         {
-            printf("WARNING: Radiation level exceeds safe limits.\n");
+            printf("WARNING: sWARNING: Radiation level exceeds safe limits.\n");
         }
         
         printf("\n\x1b[31m System Status: SHUTDOWN \x1b[0m\n");
